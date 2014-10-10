@@ -5,12 +5,34 @@ output:
     keep_md: true
 ---
 
-
 ## Loading and preprocessing the data
-
-
+```{r}
+ds <- read.csv("g:\\tmpweb\\activity.csv", header=TRUE)
+ds$date <- as.Date(ds$date, format="%Y-%m-%d")
+dsc <- na.omit(ds)
+```
 
 ## What is mean total number of steps taken per day?
+```{r echo=TRUE}
+uds <- unique(ds$date)
+sz <- length(uds)
+x <- as.Date("2014-10-01") + 1:sz
+y <- numeric(sz)
+for (u in 1:sz) {
+    x[u] <- uds[u]
+    ss <- subset (dsc, date == uds[u])
+    y[u] <- sum(ss$steps)    
+}
+sds <- data.frame(x, y, stringsAsFactors=FALSE)
+names(sds) <- c("dt","steps")
+meanStepsPerDay = mean(sds$steps, na.rm = FALSE)
+medianStepsPerDay = median(sds$steps, na.rm = FALSE)
+
+plot(sds$dt, sds$steps, type="h", main="Steps By Date", xlab="Date",ylab="Steps")
+```
+
+Mean number of steps taken per day `r meanStepsPerDay`  
+Median number of steps taken per day `r medianStepsPerDay`
 
 
 
