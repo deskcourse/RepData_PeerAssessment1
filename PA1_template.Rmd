@@ -7,6 +7,7 @@ output:
 
 ## Loading and preprocessing the data
 ```{r}
+library(lattice)
 ds <- read.csv("activity.csv", header=TRUE)
 ds$date <- as.Date(ds$date, format="%Y-%m-%d")
 dsc <- na.omit(ds)
@@ -87,6 +88,8 @@ Observation: With our chosen replacement strategy there is very little differenc
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Differences in the weekend and weekday activity patterns are show in the graph below (after code)  
+
 ```{r}
 # new factor variable is dtype
 dtype <- character(n)
@@ -111,15 +114,6 @@ dap2 <- aggregate(steps ~ interval*dayType, data = dsf, FUN = mean)
 mpos2 <- which.max(dap2$steps)
 maxSteps2 <- dap2$steps[mpos]
 
-par(mfrow = c(2, 1), mar = c(0,0,1,2), oma = c(4, 4, 0, 4))
-yan <- seq(0, maxSteps2 + 50, by=50)
-xan <- seq(0,2000,by=500)
-with (dap2, {
-  plot(steps ~ interval, subset = { dayType == "weekend"}, type="l", main="Weekend", yaxt="n", xaxt="n")
-  axis(4, at=yan)
-  plot(steps ~ interval, subset = { dayType == "weekday"}, type="l", main="Weekday")
-  mtext("Interval",1, outer=TRUE, line=2)
-  mtext("Mean Steps",2, outer=TRUE, line=2, adj=0.5)
-})
+xyplot( steps ~ interval | dayType, type="l", main="Weekday and Weekend Activity Patterns", data = dap2, layout=c(1,2))
 ```
 
