@@ -7,41 +7,119 @@ output:
 
 ## Loading and preprocessing the data
 ```{r}
-ds <- read.csv("g:\\tmpweb\\activity.csv", header=TRUE)
+ds <- read.csv("activity.csv", header=TRUE)
 ds$date <- as.Date(ds$date, format="%Y-%m-%d")
 dsc <- na.omit(ds)
 ```
-
+  
 ## What is mean total number of steps taken per day?
-```{r echo=TRUE}
-uds <- unique(ds$date)
-sz <- length(uds)
-x <- as.Date("2014-10-01") + 1:sz
-y <- numeric(sz)
-for (u in 1:sz) {
-    x[u] <- uds[u]
-    ss <- subset (dsc, date == uds[u])
-    y[u] <- sum(ss$steps)    
-}
-sds <- data.frame(x, y, stringsAsFactors=FALSE)
-names(sds) <- c("dt","steps")
-meanStepsPerDay = mean(sds$steps, na.rm = FALSE)
-medianStepsPerDay = median(sds$steps, na.rm = FALSE)
+```{r}
+sds <- aggregate(steps ~ date, data = dsc, FUN = sum) 
+meanStepsPerDay = mean(sds$steps)
+medianStepsPerDay = median(sds$steps)
+meanStepsPerDayStr = sprintf("%.2f", meanStepsPerDay)
+medianStepsPerDayStr = sprintf("%.2f", medianStepsPerDay)
 
-plot(sds$dt, sds$steps, type="h", main="Steps By Date", xlab="Date",ylab="Steps")
+plot(sds$date, sds$steps, type="h", main="Steps By Date (NA Ignored)", xlab="Date",ylab="Steps")
 ```
 
-Mean number of steps taken per day `r meanStepsPerDay`  
-Median number of steps taken per day `r medianStepsPerDay`
+*Mean number of steps taken per day : __`r meanStepsPerDayStr`__*  
+*Median number of steps taken per day : __`r medianStepsPerDayStr`__*  
 
-
-
+  
 ## What is the average daily activity pattern?
+```{r}
+dap <- aggregate(steps ~ interval, data = dsc, FUN = mean) 
+mpos <- which.max(dap$steps)
+maxInterval <- dap$interval[mpos]
+plot(dap$interval, dap$steps, type="h", main="Mean Number Of Steps By Interval", xlab="Interval",ylab="Steps (Mean)")
+abline(v=maxInterval, col="red")
+```
+
+*Maximum average number of steps was taken during interval : __`r maxInterval`__ (red vertical line in graph above)*  
 
 
 
 ## Imputing missing values
+```{r}
+missingDataRows <- nrow(ds) - nrow(dsc)
+```
 
+*Rows missing data : __`r missingDataRows`__*  
+
+
+Strategy : Replace missing step values (NA) with the mean number of steps associated with the interval of the missing record. The mean associated with the interval was calculated in the previous exercise.  
+
+```{r}
+#backfill na values withe interval average
+dsf <- ds
+n <- nrow(dsf)
+for( v in 1:n)  {
+  if (is.na(dsf$steps[v])) {
+    intervalVal <- as.numeric(dsf$interval[v])
+    intervalAve <- as.numeric(subset(dap, interval == intervalVal, select = steps))
+    dsf$steps[v] <- intervalAve
+    #print(intervalVal)
+    #print(intervalAve)
+  }
+}
+fdsds <- aggregate(steps ~ date, data = dsf, FUN = sum) 
+fdmeanStepsPerDay = mean(fdsds$steps)
+fdmedianStepsPerDay = median(fdsds$steps)
+fdmeanStepsPerDayStr = sprintf("%.2f", fdmeanStepsPerDay)
+fdmedianStepsPerDayStr = sprintf("%.2f", fdmedianStepsPerDay)
+
+plot(fdsds$date, fdsds$steps, type="h", main="Steps By Date (NA Replaced)", xlab="Date",ylab="Steps")
+```
+
+*Filled Data: Mean number of steps taken per day : __`r fdmeanStepsPerDayStr`__*  
+*Filled Data: Median number of steps taken per day : __`r fdmedianStepsPerDayStr`__*  
+
+Compare 'NA Ignored' in data source vs. 'NA Replaced' in data source  
+
+Data Source | Mean | Median
+----------- | ---- | ------
+NA Ignored  | `r meanStepsPerDayStr` | `r medianStepsPerDayStr`
+NA Replaced | `r fdmeanStepsPerDayStr` | `r fdmedianStepsPerDayStr`
+
+
+Observation: With our chosen replacement strategy there is very little difference between the calculated means and medians. It really all depends on the replacement strategy. If we had replaced all NA's with 0, we would have got different results.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+# new factor variable is dtype
+dtype <- character(n)
+lastday <- as.Date('1900-01-01',format="%Y-%m-%d")
+lastwd <- ''
+for( v in 1:n)  {
+  cd <- dsf$date[v]
+  if (lastday != cd) {
+    lastday <- cd
+    lastwd <- weekdays(cd)
+  }
+  wd <- lastwd
+  dtype[v]='weekday'
+  if (wd == "Sunday" || wd == "Saturday") {
+    dtype[v]='weekend'
+  }
+}
+
+dsf$dayType <- factor(dtype)
+
+dap2 <- aggregate(steps ~ interval*dayType, data = dsf, FUN = mean) 
+mpos2 <- which.max(dap2$steps)
+maxSteps2 <- dap2$steps[mpos]
+
+par(mfrow = c(2, 1), mar = c(0,0,1,2), oma = c(4, 4, 0, 4))
+yan <- seq(0, maxSteps2 + 50, by=50)
+xan <- seq(0,2000,by=500)
+with (dap2, {
+  plot(steps ~ interval, subset = { dayType == "weekend"}, type="l", main="Weekend", yaxt="n", xaxt="n")
+  axis(4, at=yan)
+  plot(steps ~ interval, subset = { dayType == "weekday"}, type="l", main="Weekday")
+  mtext("Interval",1, outer=TRUE, line=2)
+  mtext("Mean Steps",2, outer=TRUE, line=2, adj=0.5)
+})
+```
+
