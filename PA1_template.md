@@ -9,6 +9,7 @@ output:
 
 ```r
 library(lattice)
+library(ggplot2)
 ds <- read.csv("activity.csv", header=TRUE)
 ds$date <- as.Date(ds$date, format="%Y-%m-%d")
 dsc <- na.omit(ds)
@@ -23,7 +24,8 @@ medianStepsPerDay = median(sds$steps)
 meanStepsPerDayStr = sprintf("%.2f", meanStepsPerDay)
 medianStepsPerDayStr = sprintf("%.2f", medianStepsPerDay)
 
-plot(sds$date, sds$steps, type="h", main="Steps By Date (NA Ignored)", xlab="Date",ylab="Steps")
+#plot(sds$date, sds$steps, type="h", main="Steps By Date (NA Ignored)", xlab="Date",ylab="Steps")
+print(qplot(x=sds$date, y=sds$steps, stat="identity", geom="histogram",main="Steps By Date (NA Ignored)", xlab="Date", ylab="Steps"))
 ```
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
@@ -38,7 +40,7 @@ plot(sds$date, sds$steps, type="h", main="Steps By Date (NA Ignored)", xlab="Dat
 dap <- aggregate(steps ~ interval, data = dsc, FUN = mean) 
 mpos <- which.max(dap$steps)
 maxInterval <- dap$interval[mpos]
-plot(dap$interval, dap$steps, type="h", main="Mean Number Of Steps By Interval", xlab="Interval",ylab="Steps (Mean)")
+plot(dap$interval, dap$steps, type="l", main="Mean Number Of Steps By Interval", xlab="Interval",ylab="Steps (Mean)")
 abline(v=maxInterval, col="red")
 ```
 
@@ -79,7 +81,8 @@ fdmedianStepsPerDay = median(fdsds$steps)
 fdmeanStepsPerDayStr = sprintf("%.2f", fdmeanStepsPerDay)
 fdmedianStepsPerDayStr = sprintf("%.2f", fdmedianStepsPerDay)
 
-plot(fdsds$date, fdsds$steps, type="h", main="Steps By Date (NA Replaced)", xlab="Date",ylab="Steps")
+#plot(fdsds$date, fdsds$steps, type="h", main="Steps By Date (NA Replaced)", xlab="Date",ylab="Steps")
+print(qplot(x=fdsds$date, y=fdsds$steps, stat="identity", geom="histogram",main="Steps By Date (NA Replaced)", xlab="Date", ylab="Steps"))
 ```
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
